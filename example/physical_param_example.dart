@@ -1,5 +1,4 @@
 import 'package:physical_param/physical_param.dart';
-import 'package:physical_param/src/physical_param_types.dart';
 
 void main() {
   final distance = PhysicalParam.length(600);
