@@ -1,7 +1,7 @@
 name: physical_param
 description: Библиотека для работы с физическими параметрами
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/ProfAndroid2020/physical_param
 
 environment:
   sdk: ^3.9.4
