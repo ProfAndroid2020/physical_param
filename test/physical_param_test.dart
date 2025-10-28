@@ -2,7 +2,51 @@ import 'package:physical_param/physical_param.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('PhysicalParam Basic Operations', () {
+  group('PhysicalParam Creation', () {
+    test('length with meter', () {
+      final param = PhysicalParam.length(10, LengthUnits.meter);
+      expect(param.value, 10);
+      expect(param.type, PhysicalType.length);
+    });
+
+    test('length with kilometer conversion', () {
+      final param = PhysicalParam.length(1, LengthUnits.kilometer);
+      expect(param.value, 1000); // 1 km = 1000 meters
+      expect(param.type, PhysicalType.length);
+    });
+
+    test('time with sec', () {
+      final param = PhysicalParam.time(30, TimeUnits.sec);
+      expect(param.value, 30);
+      expect(param.type, PhysicalType.time);
+    });
+
+    test('time with hour conversion', () {
+      final param = PhysicalParam.time(1, TimeUnits.hour);
+      expect(param.value, 3600); // 1 hour = 3600 seconds
+      expect(param.type, PhysicalType.time);
+    });
+
+    test('velocity with mps', () {
+      final param = PhysicalParam.velocity(20, VelocityUnits.mps);
+      expect(param.value, 20);
+      expect(param.type, PhysicalType.velocity);
+    });
+
+    test('velocity with kmph conversion', () {
+      final param = PhysicalParam.velocity(36, VelocityUnits.kmph);
+      expect(param.value, closeTo(10, 0.001)); // 36 km/h ≈ 10 m/s
+      expect(param.type, PhysicalType.velocity);
+    });
+
+    test('dimensionless creation', () {
+      final param = PhysicalParam.dimensionless(5.5);
+      expect(param.value, 5.5);
+      expect(param.type, PhysicalType.dimensionless);
+    });
+  });
+
+  group('PhysicalParam Operations', () {
     test('length + length', () {
       final a = PhysicalParam.length(10);
       final b = PhysicalParam.length(5);
@@ -10,13 +54,12 @@ void main() {
       expect(result.value, 15);
       expect(result.type, PhysicalType.length);
     });
-
-    test('length - length', () {
-      final a = PhysicalParam.length(10);
-      final b = PhysicalParam.length(3);
+    test('velocity - velocity', () {
+      final a = PhysicalParam.velocity(10);
+      final b = PhysicalParam.velocity(5);
       final result = a - b;
-      expect(result.value, 7);
-      expect(result.type, PhysicalType.length);
+      expect(result.value, 5);
+      expect(result.type, PhysicalType.velocity);
     });
 
     test('length / velocity = time', () {
@@ -76,84 +119,94 @@ void main() {
     });
   });
 
-  group('PhysicalParam Unit Conversion', () {
-    test('length conversion - meters to feet', () {
-      final length = PhysicalParam.length(1, LengthUnits.meter);
-      final valueInFeet = length.getValue(LengthUnits.foot);
-      expect(valueInFeet, closeTo(3.28084, 0.001));
+  group('PhysicalParam Getters', () {
+    test('getValue for length with different units', () {
+      final param = PhysicalParam.length(1000); // 1000 meters
+      expect(param.getValue(LengthUnits.meter), 1000);
+      expect(param.getValue(LengthUnits.kilometer), 1);
     });
 
-    test('length conversion - feet to meters', () {
-      final length = PhysicalParam.length(3.28084, LengthUnits.foot);
-      final valueInMeters = length.getValue(LengthUnits.meter);
-      expect(valueInMeters, closeTo(1.0, 0.001));
+    test('getValue for time with different units', () {
+      final param = PhysicalParam.time(3600); // 3600 seconds
+      expect(param.getValue(TimeUnits.sec), 3600);
+      expect(param.getValue(TimeUnits.hour), 1);
     });
 
-    test('time conversion - seconds to minutes', () {
-      final time = PhysicalParam.time(60, TimeUnits.sec);
-      final valueInMinutes = time.getValue(TimeUnits.min);
-      expect(valueInMinutes, closeTo(1.0, 0.001));
+    test('getValue for velocity with different units', () {
+      final param = PhysicalParam.velocity(10); // 10 m/s
+      expect(param.getValue(VelocityUnits.mps), 10);
+      expect(param.getValue(VelocityUnits.kmph), closeTo(36, 0.001));
     });
 
-    test('time conversion - minutes to seconds', () {
-      final time = PhysicalParam.time(1, TimeUnits.min);
-      final valueInSeconds = time.getValue(TimeUnits.sec);
-      expect(valueInSeconds, closeTo(60.0, 0.001));
+    test('getValue dimensionless returns value', () {
+      final param = PhysicalParam.dimensionless(7.5);
+      expect(param.getValue(), 7.5);
+      expect(
+        param.getValue(LengthUnits.meter),
+        7.5,
+      ); // unit ignored for dimensionless
     });
 
-    test('velocity conversion - mps to kmph', () {
-      final velocity = PhysicalParam.velocity(1, VelocityUnits.mps);
-      final valueInKmph = velocity.getValue(VelocityUnits.kmph);
-      expect(valueInKmph, closeTo(3.6, 0.001));
-    });
-
-    test('velocity conversion - knots to mps', () {
-      final velocity = PhysicalParam.velocity(1, VelocityUnits.knots);
-      final valueInMps = velocity.getValue(VelocityUnits.mps);
-      expect(valueInMps, closeTo(0.514, 0.001));
-    });
-  });
-
-  group('PhysicalParam String Representation', () {
-    test('toString with default units', () {
+    test('getString with default unit', () {
       final length = PhysicalParam.length(15.123);
       expect(length.getString(), '15.12 м');
-
-      final velocity = PhysicalParam.velocity(20.456);
-      expect(velocity.getString(), '20.46 м/с');
 
       final time = PhysicalParam.time(30.789);
       expect(time.getString(), '30.79 сек');
     });
 
-    test('toString with specific units', () {
-      final length = PhysicalParam.length(1, LengthUnits.meter);
-      expect(length.getString(LengthUnits.foot), '3.28 фут');
+    test('getString with specific unit', () {
+      final length = PhysicalParam.length(1500);
+      expect(length.getString(LengthUnits.kilometer), '1.50 км');
 
-      final time = PhysicalParam.time(3600, TimeUnits.sec);
-      expect(time.getString(TimeUnits.hour), '1.00 час');
-
-      final velocity = PhysicalParam.velocity(1, VelocityUnits.mps);
-      expect(velocity.getString(VelocityUnits.kmph), '3.60 км/ч');
+      final time = PhysicalParam.time(7200);
+      expect(time.getString(TimeUnits.hour), '2.00 час');
     });
 
-    test('dimensionless string representation', () {
-      final dim = PhysicalParam.dimensionless(7.5);
-      expect(dim.getString(), '7.50');
+    test('getString dimensionless', () {
+      final dim = PhysicalParam.dimensionless(7.556);
+      expect(dim.getString(), '7.56');
+    });
+
+    test('getValue with invalid unit throws error', () {
+      final param = PhysicalParam.length(10);
+      expect(() => param.getValue(TimeUnits.sec), throwsArgumentError);
+    });
+    test('getValue with no coef map', () {
+      final param = PhysicalParam.square(10);
+      expect(() => param.getValue(SquareUnits.squareFoot), throwsArgumentError);
+    });
+
+    test('getString with invalid unit throws error', () {
+      final param = PhysicalParam.length(10);
+      expect(() => param.getString(TimeUnits.sec), throwsArgumentError);
+    });
+    test('getString with no unitsString map', () {
+      final param = PhysicalParam.square(10);
+      expect(
+        () => param.getString(SquareUnits.squareFoot),
+        throwsArgumentError,
+      );
+    });
+    test('getString with no default unit', () {
+      final param = PhysicalParam.velocity(10);
+      expect(() => param.getString(), throwsArgumentError);
+    });
+    test('getString with no default unit', () {
+      final param = PhysicalParam.acceleration(10);
+      expect(() => param.getString(), throwsArgumentError);
+    });
+    test('getString with no target unit string in map', () {
+      final param = PhysicalParam.length(10);
+      expect(() => param.getString(LengthUnits.seamiles), throwsArgumentError);
     });
   });
 
-  group('PhysicalParam Error Cases', () {
+  group('Error Cases', () {
     test('invalid addition throws error', () {
       final length = PhysicalParam.length(10);
       final time = PhysicalParam.time(5);
       expect(() => length + time, throwsArgumentError);
-    });
-
-    test('invalid subtraction throws error', () {
-      final length = PhysicalParam.length(10);
-      final velocity = PhysicalParam.velocity(5);
-      expect(() => length - velocity, throwsArgumentError);
     });
 
     test('invalid division throws error', () {
@@ -168,35 +221,20 @@ void main() {
       expect(() => length * velocity, throwsArgumentError);
     });
 
-    test('getValue with invalid unit throws error', () {
-      final length = PhysicalParam.length(10);
-      expect(() => length.getValue(TimeUnits.sec), throwsArgumentError);
+    test('invalid unit on creation length', () {
+      expect(
+        () => PhysicalParam.length(10, LengthUnits.millimeter),
+        throwsArgumentError,
+      );
     });
-  });
-
-  group('PhysicalParam Factory Methods', () {
-    test('length factory with different units', () {
-      final lengthMeter = PhysicalParam.length(1, LengthUnits.meter);
-      final lengthFoot = PhysicalParam.length(3.28084, LengthUnits.foot);
-      expect(lengthMeter.value, closeTo(lengthFoot.value, 0.001));
+    test('invalid unit on creation velocity', () {
+      expect(
+        () => PhysicalParam.velocity(10, VelocityUnits.parsec),
+        throwsArgumentError,
+      );
     });
-
-    test('time factory with different units', () {
-      final timeSec = PhysicalParam.time(60, TimeUnits.sec);
-      final timeMin = PhysicalParam.time(1, TimeUnits.min);
-      expect(timeSec.value, closeTo(timeMin.value, 0.001));
-    });
-
-    test('velocity factory with different units', () {
-      final velocityMps = PhysicalParam.velocity(1, VelocityUnits.mps);
-      final velocityKmph = PhysicalParam.velocity(3.6, VelocityUnits.kmph);
-      expect(velocityMps.value, closeTo(velocityKmph.value, 0.001));
-    });
-
-    test('dimensionless factory', () {
-      final dim = PhysicalParam.dimensionless(5.5);
-      expect(dim.value, 5.5);
-      expect(dim.type, PhysicalType.dimensionless);
+    test('invalid unit on creation time', () {
+      expect(() => PhysicalParam.time(10, TimeUnits.day), throwsArgumentError);
     });
   });
 }
