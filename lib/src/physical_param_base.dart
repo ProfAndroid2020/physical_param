@@ -18,8 +18,12 @@ class PhysicalParam {
     double value, [
     LengthUnits unit = LengthUnits.meter,
   ]) {
-    final coef = toMeter[unit]!;
-    return PhysicalParam._(value * coef, PhysicalType.length);
+    final coef = toMeter[unit];
+    if (coef == null) {
+      throw ArgumentError(unknwonUnit);
+    } else {
+      return PhysicalParam._(value * coef, PhysicalType.length);
+    }
   }
 
   factory PhysicalParam.square(
@@ -28,16 +32,24 @@ class PhysicalParam {
   ]) => PhysicalParam._(value, PhysicalType.square);
 
   factory PhysicalParam.time(double value, [TimeUnits unit = TimeUnits.sec]) {
-    final coef = toSec[unit]!;
-    return PhysicalParam._(value * coef, PhysicalType.time);
+    final coef = toSec[unit];
+    if (coef == null) {
+      throw ArgumentError(unknwonUnit);
+    } else {
+      return PhysicalParam._(value * coef, PhysicalType.time);
+    }
   }
 
   factory PhysicalParam.velocity(
     double value, [
     VelocityUnits unit = VelocityUnits.mps,
   ]) {
-    final coef = toMps[unit]!;
-    return PhysicalParam._(value * coef, PhysicalType.velocity);
+    final coef = toMps[unit];
+    if (coef == null) {
+      throw ArgumentError(unknwonUnit);
+    } else {
+      return PhysicalParam._(value * coef, PhysicalType.velocity);
+    }
   }
 
   factory PhysicalParam.acceleration(
@@ -94,40 +106,54 @@ class PhysicalParam {
     }
   }
 
-  double getValue(Enum unit) {
-    final unitMap = physicUnitsMap[type]!;
-    if (unitMap.containsKey(unit)) {
-      double coef;
-      switch (type) {
-        case PhysicalType.length:
-          coef = fromMeter[unit]!;
-          break;
-        case PhysicalType.time:
-          coef = fromSec[unit]!;
-
-        case PhysicalType.velocity:
-          coef = fromMps[unit]!;
-        default:
-          throw ArgumentError(noFromCoef);
-      }
-      return value * coef;
-    } else {
-      throw ArgumentError(
-        'У параметра типа ${type.name} нет таких единиц измерения ${unit.name}',
-      );
+  double getValue([Enum? unit]) {
+    if (type == PhysicalType.dimensionless || unit == null) {
+      return value;
     }
+
+    // Проверяем есть ли карта коэффициентов перевода для type
+    final fromCoefTypedMap = fromCoefMap[type];
+    if (fromCoefTypedMap == null) {
+      throw ArgumentError('Нет карты коэффициентов перевода для ${type.name}');
+    }
+
+    // Проверяем существование конкретного коэффициента перевода
+    final coef = fromCoefTypedMap[unit];
+    if (coef == null) {
+      throw ArgumentError('Нет коэффициента перевода в ${unit.name}');
+    }
+    return value * coef;
   }
 
-  String getString([dynamic unit]) {
+  String getString([Enum? unit]) {
     if (type == PhysicalType.dimensionless) {
       return value.toStringAsFixed(2);
     }
-    dynamic targetUnit;
-    if (unit == null) {
-      targetUnit = defaultunit[type]!;
-    } else {
-      targetUnit = unit;
+
+    final typedUnitMap = physicUnitsMap[type];
+    if (typedUnitMap == null) {
+      throw ArgumentError('Нет карты единиц измерения для ${type.name}');
     }
-    return '${getValue(targetUnit).toStringAsFixed(2)} ${physicUnitsMap[type]?[targetUnit] ?? ''}';
+
+    if (unit == null) {
+      final defaultUnit = defaultUnits[type];
+      if (defaultUnit == null) {
+        throw ArgumentError(
+          'Для ${type.name} нет единиц измерения по умолчанию',
+        );
+      }
+      final unitString = typedUnitMap[defaultUnit];
+      if (unitString == null) {
+        throw ArgumentError(
+          'Нет строки единиц измерения для ${defaultUnit.name}',
+        );
+      }
+      return '${value.toStringAsFixed(2)} $unitString';
+    }
+    final unitString = typedUnitMap[unit];
+    if (unitString == null) {
+      throw ArgumentError('Нет строки единиц измерения для ${unit.name}');
+    }
+    return '${getValue(unit).toStringAsFixed(2)} ${typedUnitMap[unit]}';
   }
 }
