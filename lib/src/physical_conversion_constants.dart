@@ -1,4 +1,17 @@
 import 'package:physical_param/src/physical_param_types.dart';
+
+// Map<PhysicalType, Map<Enum, double>> toCoefMap = {
+//   PhysicalType.length: toMeter,
+//   PhysicalType.time: toSec,
+//   PhysicalType.velocity: toMps,
+// };
+
+Map<PhysicalType, Map<Enum, double>> fromCoefMap = {
+  PhysicalType.length: fromMeter,
+  PhysicalType.velocity: fromMps,
+  PhysicalType.time: fromSec,
+};
+
 // Коэффициенты для работы с длинами
 
 /// Коэффициент перевода футов в метры
@@ -24,7 +37,7 @@ Map<LengthUnits, double> toMeter = {
   LengthUnits.meter: 1,
   LengthUnits.foot: footToMeter,
   LengthUnits.kilometer: kilometerToMeter,
-  LengthUnits.miles: seamilesToMeter,
+  LengthUnits.seamiles: seamilesToMeter,
 };
 
 /// Карта коэффициентов перевода из метров
@@ -32,7 +45,7 @@ Map<LengthUnits, double> fromMeter = {
   LengthUnits.meter: 1,
   LengthUnits.foot: meterToFoot,
   LengthUnits.kilometer: meterToKilometer,
-  LengthUnits.miles: meterToSeamiles,
+  LengthUnits.seamiles: meterToSeamiles,
 };
 
 // Коэффициенты для работы со временем
